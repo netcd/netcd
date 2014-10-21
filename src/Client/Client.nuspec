@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>netcd</id>
+        <version>0.1.0</version>
+        <title>netcd</title>
+        <authors>hagbarddenstore</authors>
+        <owners>hagbarddenstore</owners>
+        <licenseUrl>https://raw.githubusercontent.com/netcd/netcd/master/LICENSE</licenseUrl>
+        <projectUrl>http://netcd.io/</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A .NET etcd client</description>
+        <copyright>Copyright © hagbarddenstore 2014</copyright>
+        <tags>etcd</tags>
+        <dependencies>
+            <group targetFramework=".NETFramework4.0">
+                <dependency id="Newtonsoft.Json" version="6.0.5" />
+                <dependency id="RestSharp" version="104.5.0" />
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin\Release\netcd.dll" target="lib\net40\netcd.dll" />
+    </files>
+</package>
