@@ -10,6 +10,7 @@
 namespace netcd
 {
     using netcd.Advanced;
+    using netcd.Advanced.Requests;
 
     /// <summary>
     /// Defines the IAdvancedEtcdClient type.
@@ -17,36 +18,85 @@ namespace netcd
     public interface IAdvancedEtcdClient
     {
         /// <summary>
-        /// Put a value into the etcd cluster.
+        /// Set a key.
         /// </summary>
         /// <param name="request">
-        /// The put request.
+        /// The request.
         /// </param>
         /// <returns>
         /// The response.
         /// </returns>
-        PutResponse Put(PutRequest request);
+        Response SetKey(SetKeyRequest request);
 
         /// <summary>
-        /// Get a value from the etcd cluster.
+        /// Get a key.
         /// </summary>
         /// <param name="request">
-        /// The get request.
+        /// The request.
         /// </param>
         /// <returns>
         /// The response.
         /// </returns>
-        GetResponse Get(GetRequest request);
+        Response GetKey(GetKeyRequest request);
 
         /// <summary>
-        /// Delete a value from the etcd cluster.
+        /// Delete a key.
         /// </summary>
         /// <param name="request">
-        /// The delete request.
+        /// The request.
         /// </param>
         /// <returns>
         /// The response.
         /// </returns>
-        DeleteResponse Delete(DeleteRequest request);
+        Response DeleteKey(DeleteKeyRequest request);
+
+        /// <summary>
+        /// Watch a key.
+        /// </summary>
+        /// <param name="request">
+        /// The request.
+        /// </param>
+        void WatchKey(WatchKeyRequest request);
+
+        /// <summary>
+        /// Get a directory.
+        /// </summary>
+        /// <param name="request">
+        /// The request.
+        /// </param>
+        /// <returns>
+        /// The response.
+        /// </returns>
+        Response GetDirectory(GetDirectoryRequest request);
+
+        /// <summary>
+        /// Create a directory.
+        /// </summary>
+        /// <param name="request">
+        /// The request.
+        /// </param>
+        /// <returns>
+        /// The response.
+        /// </returns>
+        Response CreateDirectory(CreateDirectoryRequest request);
+
+        /// <summary>
+        /// Delete a directory.
+        /// </summary>
+        /// <param name="request">
+        /// The request.
+        /// </param>
+        /// <returns>
+        /// The response.
+        /// </returns>
+        Response DeleteDirectory(DeleteDirectoryRequest request);
+
+        /// <summary>
+        /// Watch a directory.
+        /// </summary>
+        /// <param name="request">
+        /// The request.
+        /// </param>
+        void WatchDirectory(WatchDirectoryRequest request);
     }
 }

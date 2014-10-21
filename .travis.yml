@@ -1,0 +1,7 @@
+language: c
+
+install:
+	- sudo apt-get install -y mono-devel mono-gmcs
+
+script:
+	- xbuild CI.proj

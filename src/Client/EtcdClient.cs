@@ -12,22 +12,16 @@ namespace netcd
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Web;
 
     using netcd.Advanced;
-    using netcd.Http;
+    using netcd.Advanced.Requests;
     using netcd.Serialization;
 
     /// <summary>
     /// Defines the EtcdClient type.
     /// </summary>
-    public class EtcdClient : IEtcdClient, IAdvancedEtcdClient
+    public class EtcdClient : IEtcdClient
     {
-        /// <summary>
-        /// The cluster uri.
-        /// </summary>
-        private readonly Uri _clusterUrl;
-
         /// <summary>
         /// The serializer.
         /// </summary>
@@ -37,6 +31,11 @@ namespace netcd
         /// The deserializer.
         /// </summary>
         private readonly IDeserializer _deserializer;
+
+        /// <summary>
+        /// The advanced etcd client.
+        /// </summary>
+        private readonly IAdvancedEtcdClient _advancedEtcdClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EtcdClient"/> class.
@@ -52,9 +51,10 @@ namespace netcd
         /// </param>
         public EtcdClient(Uri clusterUrl, ISerializer serializer, IDeserializer deserializer)
         {
-            _clusterUrl = clusterUrl;
             _serializer = serializer;
             _deserializer = deserializer;
+
+            _advancedEtcdClient = new AdvancedEtcdClient(clusterUrl);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace netcd
         /// </summary>
         public IAdvancedEtcdClient Advanced
         {
-            get { return this; }
+            get { return _advancedEtcdClient; }
         }
 
         /// <summary>
@@ -147,23 +147,30 @@ namespace netcd
         {
             get
             {
-                object value;
+                var response = _advancedEtcdClient.GetKey(new GetKeyRequest { Key = key });
 
-                if (TryGetValue(key, out value))
+                if (response == null)
                 {
-                    return value;
+                    throw new KeyNotFoundException();
                 }
 
-                throw new KeyNotFoundException();
+                if (response.Node.Dir)
+                {
+                    throw new NotSupportedException("Use the advanced interface to access directories");
+                }
+
+                return _deserializer.Deserialize(response.Node.Value);
             }
 
             set
             {
-                var json = _serializer.Serialize(value);
+                var request = new SetKeyRequest
+                {
+                    Key = key,
+                    Value = _serializer.Serialize(value)
+                };
 
-                var request = new PutRequest(key, json);
-
-                Advanced.Put(request);
+                _advancedEtcdClient.SetKey(request);
             }
         }
 
@@ -253,7 +260,16 @@ namespace netcd
         /// </param>
         bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
         {
-            throw new NotSupportedException();
+            var response = _advancedEtcdClient.GetKey(new GetKeyRequest { Key = item.Key });
+
+            if (response == null || response.ErrorCode == 100 || response.Node == null)
+            {
+                return false;
+            }
+
+            var fetchedValue = _deserializer.Deserialize(response.Node.Value);
+
+            return Equals(item.Value, fetchedValue);
         }
 
         /// <summary>
@@ -311,8 +327,9 @@ namespace netcd
         /// </exception>
         public bool ContainsKey(string key)
         {
-            // TODO: Try to fetch the value, if not exists, return false, else return true.
-            throw new NotImplementedException();
+            var response = _advancedEtcdClient.GetKey(new GetKeyRequest { Key = key });
+
+            return response != null && response.ErrorCode != 100 && response.Node != null;
         }
 
         /// <summary>
@@ -338,7 +355,9 @@ namespace netcd
         /// </exception>
         public void Add(string key, object value)
         {
-            throw new NotImplementedException();
+            var serializedValue = _serializer.Serialize(value);
+
+            Advanced.SetKey(new SetKeyRequest { Key = key, Value = serializedValue });
         }
 
         /// <summary>
@@ -355,7 +374,7 @@ namespace netcd
         /// </exception>
         public void Add(KeyValuePair<string, object> item)
         {
-            throw new NotImplementedException();
+            Add(item.Key, item.Value);
         }
 
         /// <summary>
@@ -380,7 +399,9 @@ namespace netcd
         /// </exception>
         public bool Remove(string key)
         {
-            throw new NotImplementedException();
+            var response = _advancedEtcdClient.DeleteKey(new DeleteKeyRequest { Key = key });
+
+            return response != null && response.ErrorCode != 100 && response.Node != null;
         }
 
         /// <summary>
@@ -428,83 +449,20 @@ namespace netcd
         /// </exception>
         public bool TryGetValue(string key, out object value)
         {
-            try
-            {
-                var response = Advanced.Get(new GetRequest(key));
+            var response = _advancedEtcdClient.GetKey(new GetKeyRequest { Key = key });
 
-                value = _deserializer.Deserialize(response.Node.Value);
-
-                return true;
-            }
-            catch (KeyNotFoundException)
+            if (response == null || response.ErrorCode == 100 || response.Node == null)
             {
-                value = null;
+                value = default(object);
 
                 return false;
             }
-        }
 
-        /// <summary>
-        /// Put a value into the etcd cluster.
-        /// </summary>
-        /// <param name="request">
-        /// The put request.
-        /// </param>
-        /// <returns>
-        /// The response.
-        /// </returns>
-        PutResponse IAdvancedEtcdClient.Put(PutRequest request)
-        {
-            var formData = new Dictionary<string, object>
-            {
-                { "value", _serializer.Serialize(request.Value) }
-            };
+            var deserializedValue = _deserializer.Deserialize(response.Node.Value);
 
-            if (request.TimeToLive > 0)
-            {
-                formData["ttl"] = request.TimeToLive;
-            }
+            value = deserializedValue;
 
-            var response = HttpClient.Put<PutResponse>(new Uri(_clusterUrl, string.Format("v2/keys/{0}", request.Key)), formData);
-
-            return response;
-        }
-
-        /// <summary>
-        /// Get a value from the etcd cluster.
-        /// </summary>
-        /// <param name="request">
-        /// The get request.
-        /// </param>
-        /// <returns>
-        /// The response.
-        /// </returns>
-        GetResponse IAdvancedEtcdClient.Get(GetRequest request)
-        {
-            try
-            {
-                var response = HttpClient.Get<GetResponse>(new Uri(_clusterUrl, string.Format("v2/keys/{0}", request.Key)));
-
-                return response;
-            }
-            catch (HttpException)
-            {
-                throw new KeyNotFoundException();
-            }
-        }
-
-        /// <summary>
-        /// Delete a value from the etcd cluster.
-        /// </summary>
-        /// <param name="request">
-        /// The delete request.
-        /// </param>
-        /// <returns>
-        /// The response.
-        /// </returns>
-        DeleteResponse IAdvancedEtcdClient.Delete(DeleteRequest request)
-        {
-            throw new NotImplementedException();
+            return true;
         }
     }
 }

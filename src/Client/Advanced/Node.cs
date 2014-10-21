@@ -10,8 +10,7 @@
 namespace netcd.Advanced
 {
     using System;
-
-    using Newtonsoft.Json;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Defines the Node type.
@@ -19,65 +18,43 @@ namespace netcd.Advanced
     public class Node
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Node"/> class.
+        /// Gets or sets the created index.
         /// </summary>
-        /// <param name="createdIndex">
-        /// The created index.
-        /// </param>
-        /// <param name="key">
-        /// The key.
-        /// </param>
-        /// <param name="modifiedIndex">
-        /// The modified index.
-        /// </param>
-        /// <param name="value">
-        /// The value.
-        /// </param>
-        /// <param name="expiration">
-        /// The expiration.
-        /// </param>
-        /// <param name="timeToLive">
-        /// The time to live.
-        /// </param>
-        public Node(int createdIndex, string key, int modifiedIndex, string value, DateTime expiration, int timeToLive)
-        {
-            TimeToLive = timeToLive;
-            Expiration = expiration;
-            CreatedIndex = createdIndex;
-            Key = key;
-            ModifiedIndex = modifiedIndex;
-            Value = value;
-        }
+        public int CreatedIndex { get; set; }
 
         /// <summary>
-        /// Gets the created index.
+        /// Gets or sets the key.
         /// </summary>
-        public int CreatedIndex { get; private set; }
+        public string Key { get; set; }
 
         /// <summary>
-        /// Gets the key.
+        /// Gets or sets the modified index.
         /// </summary>
-        public string Key { get; private set; }
+        public int ModifiedIndex { get; set; }
 
         /// <summary>
-        /// Gets the modified index.
+        /// Gets or sets the value.
         /// </summary>
-        public int ModifiedIndex { get; private set; }
+        public string Value { get; set; }
 
         /// <summary>
-        /// Gets the value.
+        /// Gets or sets the expiration.
         /// </summary>
-        public string Value { get; private set; }
+        public DateTime? Expiration { get; set; }
 
         /// <summary>
-        /// Gets the expiration.
+        /// Gets or sets the time to live.
         /// </summary>
-        public DateTime Expiration { get; private set; }
+        public int? Ttl { get; set; }
 
         /// <summary>
-        /// Gets the time to live.
+        /// Gets or sets the nodes.
         /// </summary>
-        [JsonProperty("ttl")]
-        public int TimeToLive { get; private set; }
+        public List<Node> Nodes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether dir.
+        /// </summary>
+        public bool Dir { get; set; }
     }
 }
