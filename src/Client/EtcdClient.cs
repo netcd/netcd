@@ -202,7 +202,15 @@ namespace netcd
             var serializer = new DefaultSerializer();
             var deserializer = new DefaultSerializer();
 
-            return new EtcdClient(clusterUrl, serializer, deserializer);
+            return new EtcdClient(new[] { clusterUrl }, serializer, deserializer);
+        }
+
+        public static IEtcdClient Discover(string discoveryUrl)
+        {
+        }
+
+        public static IEtcdClient Discover(string discoveryUrl, ISerializer serializer, IDeserializer deserializer)
+        {
         }
 
         /// <summary>
