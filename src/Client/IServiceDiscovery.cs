@@ -9,6 +9,7 @@
 
 namespace netcd
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -40,6 +41,23 @@ namespace netcd
         /// The instance address.
         /// </param>
         void Announce(string serviceName, string instanceName, string instanceAddress);
+
+        /// <summary>
+        /// Announce a new instance for a given service.
+        /// </summary>
+        /// <param name="serviceName">
+        /// The service name.
+        /// </param>
+        /// <param name="instanceName">
+        /// The instance name.
+        /// </param>
+        /// <param name="instanceAddress">
+        /// The instance address.
+        /// </param>
+        /// <param name="timeToLive">
+        /// The time to live.
+        /// </param>
+        void Announce(string serviceName, string instanceName, string instanceAddress, TimeSpan timeToLive);
 
         /// <summary>
         /// Retire an instance for a given service.

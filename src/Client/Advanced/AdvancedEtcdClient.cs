@@ -22,19 +22,41 @@ namespace netcd.Advanced
     public class AdvancedEtcdClient : IAdvancedEtcdClient
     {
         /// <summary>
+        /// The cluster urls.
+        /// </summary>
+        private readonly Uri[] _clusterUrls;
+
+        /// <summary>
         /// The client.
         /// </summary>
-        private readonly RestClient _client;
+        private RestClient _client;
+
+        /// <summary>
+        /// The current cluster url index.
+        /// </summary>
+        private int _currentClusterUrlIndex;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdvancedEtcdClient"/> class.
         /// </summary>
-        /// <param name="clusterUrl">
-        /// The cluster url.
+        /// <param name="clusterUrls">
+        /// The cluster urls.
         /// </param>
-        public AdvancedEtcdClient(Uri clusterUrl)
+        public AdvancedEtcdClient(Uri[] clusterUrls)
         {
-            _client = new RestClient(clusterUrl.ToString());
+            if (clusterUrls == null)
+            {
+                throw new ArgumentNullException("clusterUrls");
+            }
+
+            if (clusterUrls.Length < 1)
+            {
+                throw new ArgumentException("Must provide at least one url", "clusterUrls");
+            }
+
+            _clusterUrls = clusterUrls;
+
+            RenewClient();
         }
 
         /// <summary>
@@ -163,6 +185,31 @@ namespace netcd.Advanced
         }
 
         /// <summary>
+        /// Renew the client.
+        /// </summary>
+        private void RenewClient()
+        {
+            var url = _clusterUrls[_currentClusterUrlIndex].ToString();
+
+            ChooseNextClusterNodeCandidate();
+
+            _client = new RestClient(url);
+        }
+
+        /// <summary>
+        /// Choose the next cluster node candidate.
+        /// </summary>
+        private void ChooseNextClusterNodeCandidate()
+        {
+            _currentClusterUrlIndex += 1;
+
+            if (_currentClusterUrlIndex >= _clusterUrls.Length)
+            {
+                _currentClusterUrlIndex = 0;
+            }
+        }
+
+        /// <summary>
         /// Execute a request against etcd.
         /// </summary>
         /// <param name="key">
@@ -194,6 +241,7 @@ namespace netcd.Advanced
             var response = _client.Execute<Response>(request);
 
             // TODO: Handle exception.
+            // TODO: On timeout exception, renew the client.
 
             return ProcessResponse(response);
         }

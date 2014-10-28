@@ -12,10 +12,12 @@ namespace netcd
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
 
     using netcd.Advanced;
     using netcd.Advanced.Requests;
     using netcd.Serialization;
+    using netcd.Service;
 
     /// <summary>
     /// Defines the EtcdClient type.
@@ -38,10 +40,15 @@ namespace netcd
         private readonly IAdvancedEtcdClient _advancedEtcdClient;
 
         /// <summary>
+        /// The service discovery.
+        /// </summary>
+        private readonly IServiceDiscovery _serviceDiscovery;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="EtcdClient"/> class.
         /// </summary>
-        /// <param name="clusterUrl">
-        /// The cluster url.
+        /// <param name="clusterUrls">
+        /// The cluster urls.
         /// </param>
         /// <param name="serializer">
         /// The serializer.
@@ -49,12 +56,13 @@ namespace netcd
         /// <param name="deserializer">
         /// The deserializer.
         /// </param>
-        public EtcdClient(Uri clusterUrl, ISerializer serializer, IDeserializer deserializer)
+        public EtcdClient(Uri[] clusterUrls, ISerializer serializer, IDeserializer deserializer)
         {
             _serializer = serializer;
             _deserializer = deserializer;
 
-            _advancedEtcdClient = new AdvancedEtcdClient(clusterUrl);
+            _advancedEtcdClient = new AdvancedEtcdClient(clusterUrls);
+            _serviceDiscovery = new ServiceDiscovery(_advancedEtcdClient);
         }
 
         /// <summary>
@@ -63,6 +71,14 @@ namespace netcd
         public IAdvancedEtcdClient Advanced
         {
             get { return _advancedEtcdClient; }
+        }
+
+        /// <summary>
+        /// Gets the service.
+        /// </summary>
+        public IServiceDiscovery Service
+        {
+            get { return _serviceDiscovery; }
         }
 
         /// <summary>
@@ -205,12 +221,43 @@ namespace netcd
             return new EtcdClient(new[] { clusterUrl }, serializer, deserializer);
         }
 
+        /// <summary>
+        /// Discover an etcd cluster via a discovery service.
+        /// </summary>
+        /// <param name="discoveryUrl">
+        /// The discovery service url.
+        /// </param>
+        /// <returns>
+        /// The configured client.
+        /// </returns>
         public static IEtcdClient Discover(string discoveryUrl)
         {
+            var serializer = new DefaultSerializer();
+            var deserializer = new DefaultSerializer();
+
+            return Discover(discoveryUrl, serializer, deserializer);
         }
 
+        /// <summary>
+        /// Discover an etcd cluster via a discovery service.
+        /// </summary>
+        /// <param name="discoveryUrl">
+        /// The discovery service url.
+        /// </param>
+        /// <param name="serializer">
+        /// The serializer.
+        /// </param>
+        /// <param name="deserializer">
+        /// The deserializer.
+        /// </param>
+        /// <returns>
+        /// The configured client.
+        /// </returns>
         public static IEtcdClient Discover(string discoveryUrl, ISerializer serializer, IDeserializer deserializer)
         {
+            var addresses = Discovery.ClusterDiscoverer.Discover(discoveryUrl);
+
+            return new EtcdClient(addresses.Select(x => new Uri(x)).ToArray(), serializer, deserializer);
         }
 
         /// <summary>

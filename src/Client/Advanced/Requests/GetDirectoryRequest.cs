@@ -22,6 +22,11 @@ namespace netcd.Advanced.Requests
         public string Key { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether recursive.
+        /// </summary>
+        public bool Recursive { get; set; }
+
+        /// <summary>
         /// Get the parameters.
         /// </summary>
         /// <returns>
@@ -30,6 +35,11 @@ namespace netcd.Advanced.Requests
         public Dictionary<string, object> GetParameters()
         {
             var parameters = new Dictionary<string, object>();
+
+            if (Recursive)
+            {
+                parameters.Add("recursive", "true");
+            }
 
             return parameters;
         }

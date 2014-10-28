@@ -9,7 +9,11 @@
 
 namespace netcd.Service
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
+
+    using netcd.Advanced.Requests;
 
     /// <summary>
     /// Defines the ServiceDiscovery type.
@@ -43,7 +47,21 @@ namespace netcd.Service
         /// </returns>
         public IEnumerable<string> Discover(string serviceName)
         {
-            throw new System.NotImplementedException();
+            var request = new GetDirectoryRequest
+            {
+                Key = serviceName
+            };
+
+            var response = _advancedEtcdClient.GetDirectory(request);
+
+            if (response == null || response.Node == null || response.Node.Nodes == null)
+            {
+                return new string[0];
+            }
+
+            var addresses = response.Node.Nodes.Select(x => x.Value);
+
+            return addresses.ToArray();
         }
 
         /// <summary>
@@ -60,7 +78,34 @@ namespace netcd.Service
         /// </param>
         public void Announce(string serviceName, string instanceName, string instanceAddress)
         {
-            throw new System.NotImplementedException();
+            Announce(serviceName, instanceName, instanceAddress, TimeSpan.FromSeconds(0));
+        }
+
+        /// <summary>
+        /// Announce a new instance for a given service.
+        /// </summary>
+        /// <param name="serviceName">
+        /// The service name.
+        /// </param>
+        /// <param name="instanceName">
+        /// The instance name.
+        /// </param>
+        /// <param name="instanceAddress">
+        /// The instance address.
+        /// </param>
+        /// <param name="timeToLive">
+        /// The time to live.
+        /// </param>
+        public void Announce(string serviceName, string instanceName, string instanceAddress, TimeSpan timeToLive)
+        {
+            var request = new SetKeyRequest
+            {
+                Key = string.Format("{0}/{1}", serviceName, instanceName),
+                Value = instanceAddress,
+                TimeToLive = (int)timeToLive.TotalSeconds
+            };
+
+            _advancedEtcdClient.SetKey(request);
         }
 
         /// <summary>
@@ -74,7 +119,12 @@ namespace netcd.Service
         /// </param>
         public void Retire(string serviceName, string instanceName)
         {
-            throw new System.NotImplementedException();
+            var request = new DeleteKeyRequest
+            {
+                Key = string.Format("{0}/{1}", serviceName, instanceName)
+            };
+
+            _advancedEtcdClient.DeleteKey(request);
         }
     }
 }

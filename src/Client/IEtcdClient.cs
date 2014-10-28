@@ -20,5 +20,10 @@ namespace netcd
         /// Gets the advanced.
         /// </summary>
         IAdvancedEtcdClient Advanced { get; }
+
+        /// <summary>
+        /// Gets the service.
+        /// </summary>
+        IServiceDiscovery Service { get; }
     }
 }

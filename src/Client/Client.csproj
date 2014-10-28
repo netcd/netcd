@@ -55,6 +55,7 @@
     <Compile Include="Advanced\Response.cs" />
     <Compile Include="Advanced\Requests\WatchDirectoryRequest.cs" />
     <Compile Include="Advanced\Requests\WatchKeyRequest.cs" />
+    <Compile Include="Discovery\ClusterDiscoverer.cs" />
     <Compile Include="EtcdClient.cs" />
     <Compile Include="IAdvancedEtcdClient.cs" />
     <Compile Include="IEtcdClient.cs" />
