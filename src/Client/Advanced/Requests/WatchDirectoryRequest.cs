@@ -23,6 +23,11 @@ namespace netcd.Advanced.Requests
         public string Key { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether recursive.
+        /// </summary>
+        public bool Recursive { get; set; }
+
+        /// <summary>
         /// Gets or sets the callback.
         /// </summary>
         public Action<Response> Callback { get; set; }
@@ -39,6 +44,11 @@ namespace netcd.Advanced.Requests
             {
                 { "wait", "true" }
             };
+
+            if (Recursive)
+            {
+                parameters.Add("recursive", "true");
+            }
 
             return parameters;
         }
