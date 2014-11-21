@@ -35,7 +35,10 @@ namespace netcd.Advanced.Requests
         /// </returns>
         public Dictionary<string, object> GetParameters()
         {
-            var parameters = new Dictionary<string, object>();
+            var parameters = new Dictionary<string, object>
+            {
+                { "wait", "true" }
+            };
 
             return parameters;
         }
